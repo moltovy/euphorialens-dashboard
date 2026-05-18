@@ -22,7 +22,7 @@ import {
 } from "recharts";
 
 import { formatDate, formatInteger, formatPercent, formatUsd } from "@/lib/format";
-import type { ActivityPoint, DistributionBucket, TraderActivityPoint, TraderRecord } from "@/lib/types";
+import type { ActivityPoint, ConcentrationCurvePoint, DistributionBucket, TraderActivityPoint, TraderRecord } from "@/lib/types";
 
 export function ChartPanel({
   title,
@@ -561,11 +561,17 @@ function ConcentrationTooltip({ active, payload }: any) {
   );
 }
 
-export function ConcentrationCurveChart({ traders }: { traders: TraderRecord[] }) {
-  const sorted = [...traders].filter((trader) => trader.volumeUsd > 0).sort((a, b) => b.volumeUsd - a.volumeUsd);
+export function ConcentrationCurveChart({
+  traders,
+  points: providedPoints,
+}: {
+  traders?: TraderRecord[];
+  points?: ConcentrationCurvePoint[];
+}) {
+  const sorted = [...(traders ?? [])].filter((trader) => trader.volumeUsd > 0).sort((a, b) => b.volumeUsd - a.volumeUsd);
   const totalVolume = sorted.reduce((sum, trader) => sum + trader.volumeUsd, 0);
   let runningVolume = 0;
-  const points = sorted.slice(0, 50).map((trader, index) => {
+  const points = providedPoints?.length ? providedPoints : sorted.slice(0, 50).map((trader, index) => {
     runningVolume += trader.volumeUsd;
     return {
       rank: index + 1,

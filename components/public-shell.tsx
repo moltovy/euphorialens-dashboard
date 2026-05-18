@@ -13,10 +13,13 @@ import {
 import { asOfUtc as fallbackAsOfUtc, euphoriaUrl, tradeUrl, xUrl } from "@/lib/dashboard-data";
 import { formatDateTime } from "@/lib/format";
 import { creatorXUrl } from "@/lib/links";
+import type { PublicDashboardMetadata } from "@/lib/types";
 
 type PublicShellProps = {
   active: string;
   asOfUtc?: string;
+  dataSource?: "remote" | "fallback";
+  metadata?: PublicDashboardMetadata;
   children: ReactNode;
 };
 
@@ -100,7 +103,14 @@ export function NavBar({ active }: { active: string }) {
   );
 }
 
-export function MethodologyFooter({ asOfUtc = fallbackAsOfUtc }: { asOfUtc?: string }) {
+export function MethodologyFooter({
+  asOfUtc = fallbackAsOfUtc,
+  metadata,
+}: {
+  asOfUtc?: string;
+  metadata?: PublicDashboardMetadata;
+}) {
+  const dataThrough = metadata?.analysisDataThrough ?? metadata?.maxTimestamp ?? metadata?.lastSeenAt;
   return (
     <footer className="border-t border-white/10 px-4 py-10">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1.5fr_1fr] lg:items-start">
@@ -112,7 +122,8 @@ export function MethodologyFooter({ asOfUtc = fallbackAsOfUtc }: { asOfUtc?: str
             On-chain analytics for Euphoria Mainnet activity, including public-safe volume, taps, trading accounts, Net PNL (Est.), and concentration.
           </p>
           <p className="mt-3 text-xs leading-5 text-euphoria-subtle/60">
-            Data refreshed: {formatDateTime(asOfUtc)}. EuphoriaLens is an independent research dashboard. Not affiliated with, endorsed by, or sponsored by Euphoria Finance.
+            Dashboard feed refreshed: {formatDateTime(asOfUtc)}
+            {dataThrough ? ` · On-chain data through: ${formatDateTime(dataThrough)}` : ""}. EuphoriaLens is an independent research dashboard. Not affiliated with, endorsed by, or sponsored by Euphoria Finance.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -150,7 +161,7 @@ export function MethodologyFooter({ asOfUtc = fallbackAsOfUtc }: { asOfUtc?: str
   );
 }
 
-export function PublicShell({ active, asOfUtc, children }: PublicShellProps) {
+export function PublicShell({ active, asOfUtc, metadata, children }: PublicShellProps) {
   return (
     <div className="min-h-screen bg-euphoria-bg text-euphoria-text font-sans">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(circle_at_18%_0%,rgba(255,186,224,0.09),transparent_28%),radial-gradient(circle_at_82%_8%,rgba(252,141,244,0.07),transparent_30%),linear-gradient(135deg,rgba(12,12,12,0.99),rgba(18,18,18,0.96)_48%,rgba(12,12,12,0.99))]" />
@@ -158,7 +169,7 @@ export function PublicShell({ active, asOfUtc, children }: PublicShellProps) {
         <TopCtaStrip />
         <NavBar active={active} />
         {children}
-        <MethodologyFooter asOfUtc={asOfUtc} />
+        <MethodologyFooter asOfUtc={asOfUtc} metadata={metadata} />
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export default async function LeaderboardPage() {
   const largestPlatformPayout = summary.largestPlatformPayoutUsd ?? summary.largestSettlementUsd;
 
   return (
-    <PublicShell active="/leaderboard" asOfUtc={asOfUtc}>
+    <PublicShell active="/leaderboard" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="relative mx-auto max-w-7xl overflow-hidden">
           <img

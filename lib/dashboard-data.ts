@@ -3,48 +3,56 @@ import { formatUsd } from "@/lib/format";
 import type {
   ActivityPoint,
   CohortFilter,
+  ConcentrationCurvePoint,
   DistributionBucket,
   PnlDistributionPayload,
+  PublicDashboardManifest,
   PublicDashboardPayload,
+  PublicDashboardSummaryPayload,
   TraderRecord,
   WhaleMetric,
 } from "@/lib/types";
 
-export type DashboardData = {
-  metadata: PublicDashboardPayload["metadata"];
+export type DashboardSummaryData = {
+  metadata: PublicDashboardSummaryPayload["metadata"];
   dataSource: "remote" | "fallback";
+  manifest?: PublicDashboardManifest | null;
   asOfUtc: string;
   tradeUrl: string;
   xUrl: string;
   euphoriaUrl: string;
-  traders: TraderRecord[];
+  leaderboardPreviewRows: TraderRecord[];
   overviewSeries: ActivityPoint[];
-  summary: PublicDashboardPayload["summary"];
-  concentration: PublicDashboardPayload["concentration"];
+  summary: PublicDashboardSummaryPayload["summary"];
+  concentration: PublicDashboardSummaryPayload["concentration"];
+  concentrationCurve: ConcentrationCurvePoint[];
   pnlDistribution?: PnlDistributionPayload | null;
   tapOutcomeDistribution: DistributionBucket[];
   tapCountDistribution: DistributionBucket[];
   settlementDistribution: DistributionBucket[];
+  whaleMetrics: WhaleMetric[];
+};
+
+export type DashboardData = DashboardSummaryData & {
+  traders: TraderRecord[];
   whaleTraders: TraderRecord[];
   largestTransfers: TraderRecord[];
-  whaleMetrics: WhaleMetric[];
 };
 
 export const tradeUrl = "https://euphoria.finance/@impureidol564063";
 export const xUrl = "https://x.com/Euphoria_fi";
 export const euphoriaUrl = "https://euphoria.finance/@impureidol564063";
 
-export function createDashboardData(
-  payload: PublicDashboardPayload,
-  dataSource: DashboardData["dataSource"] = "fallback",
-): DashboardData {
-  const normalizedOverview = payload.overviewSeries.map((point) => ({
+function normalizeOverview(rows: ActivityPoint[] = []) {
+  return rows.map((point) => ({
     ...point,
     activityEvents: point.activityEvents ?? point.transferBets,
     settlements: point.settlements ?? point.settlementTransfers,
   }));
+}
 
-  const normalizedTraders = payload.traders.map((trader) => ({
+export function normalizeTraderRows(rows: TraderRecord[] = []) {
+  return rows.map((trader) => ({
     ...trader,
     pnlUsd: trader.accountPnlUsd ?? trader.pnlUsd ?? null,
     accountPnlUsd: trader.accountPnlUsd ?? trader.pnlUsd ?? null,
@@ -55,7 +63,10 @@ export function createDashboardData(
     largestPlatformPayoutUsd: trader.largestPlatformPayoutUsd ?? trader.largestSettlementUsd ?? trader.largestTransferUsd,
     largestSettlementUsd: trader.largestSettlementUsd ?? trader.largestPlatformPayoutUsd ?? trader.largestTransferUsd,
   }));
-  const leaderboardTraders = [...normalizedTraders].sort((a, b) => {
+}
+
+export function sortTraderRows(rows: TraderRecord[]) {
+  return [...rows].sort((a, b) => {
     const pnlA = a.accountPnlUsd ?? a.pnlUsd;
     const pnlB = b.accountPnlUsd ?? b.pnlUsd;
     if (typeof pnlA === "number" && Number.isFinite(pnlA) && typeof pnlB === "number" && Number.isFinite(pnlB)) {
@@ -69,52 +80,94 @@ export function createDashboardData(
     }
     return b.volumeUsd - a.volumeUsd;
   });
+}
 
-  const whaleTraders = [...normalizedTraders].sort((a, b) => b.volumeUsd - a.volumeUsd).slice(0, 20);
-  const largestTransfers = [...normalizedTraders]
-    .sort((a, b) => (b.largestSettlementUsd ?? b.largestTransferUsd) - (a.largestSettlementUsd ?? a.largestTransferUsd))
-    .slice(0, 10);
-
+function buildWhaleMetrics(
+  summary: PublicDashboardSummaryPayload["summary"],
+  concentration: PublicDashboardSummaryPayload["concentration"],
+  whaleTraders: TraderRecord[],
+) {
   const whaleVolume = whaleTraders.reduce((sum, trader) => sum + trader.volumeUsd, 0);
-  const summary = payload.summary;
-  const concentration = payload.concentration;
-  const whaleMetrics: WhaleMetric[] = [
+  const top10Share = summary.top10VolumeSharePercent ?? concentration?.top10VolumeSharePercent ?? 0;
+  return [
     {
       label: "Top 10 volume share",
-      value: `${Math.round(summary.top10VolumeSharePercent)}%`,
-      detail: "Share of on-chain volume from the ten largest trader wallets.",
+      value: `${Math.round(top10Share)}%`,
+      detail: "Share of on-chain volume from the ten largest trading accounts.",
     },
     {
       label: "Top 20 volume",
       value: formatUsd(whaleVolume, { compact: true }),
-      detail: "On-chain volume from the top 20 high-volume wallets.",
+      detail: "On-chain volume from the top 20 high-volume accounts.",
     },
     {
       label: "Top 25 share",
-      value: `${Math.round(concentration?.top25VolumeSharePercent ?? summary.top10VolumeSharePercent)}%`,
-      detail: "Share of on-chain volume from the top 25 trader wallets.",
+      value: `${Math.round(concentration?.top25VolumeSharePercent ?? summary.top25VolumeSharePercent ?? top10Share)}%`,
+      detail: "Share of on-chain volume from the top 25 trading accounts.",
     },
   ];
+}
+
+export function createDashboardSummaryData(
+  payload: PublicDashboardSummaryPayload,
+  dataSource: DashboardSummaryData["dataSource"] = "fallback",
+  manifest?: PublicDashboardManifest | null,
+): DashboardSummaryData {
+  const previewRows = sortTraderRows(normalizeTraderRows(payload.leaderboardPreviewRows ?? payload.traders ?? []));
+  const whalePreviewRows = [...previewRows].sort((a, b) => b.volumeUsd - a.volumeUsd).slice(0, 20);
+  const summary = payload.summary;
+  const concentration = payload.concentration;
 
   return {
     metadata: payload.metadata,
     dataSource,
+    manifest,
     asOfUtc: payload.metadata.generatedAt,
     tradeUrl,
     xUrl,
     euphoriaUrl,
-    traders: leaderboardTraders,
-    overviewSeries: normalizedOverview,
+    leaderboardPreviewRows: previewRows,
+    overviewSeries: normalizeOverview(payload.overviewSeries),
     summary,
     concentration,
+    concentrationCurve: payload.concentrationCurve ?? [],
     pnlDistribution: payload.pnlDistribution ?? null,
     tapOutcomeDistribution: payload.tapOutcomeDistribution ?? [],
     tapCountDistribution: payload.tapCountDistribution ?? [],
     settlementDistribution: payload.settlementDistribution ?? [],
+    whaleMetrics: buildWhaleMetrics(summary, concentration, whalePreviewRows),
+  };
+}
+
+export function createDashboardDataFromParts(base: DashboardSummaryData, traders: TraderRecord[]): DashboardData {
+  const leaderboardTraders = sortTraderRows(normalizeTraderRows(traders));
+  const whaleTraders = [...leaderboardTraders].sort((a, b) => b.volumeUsd - a.volumeUsd).slice(0, 20);
+  const largestTransfers = [...leaderboardTraders]
+    .sort((a, b) => (b.largestSettlementUsd ?? b.largestTransferUsd) - (a.largestSettlementUsd ?? a.largestTransferUsd))
+    .slice(0, 10);
+
+  return {
+    ...base,
+    traders: leaderboardTraders,
     whaleTraders,
     largestTransfers,
-    whaleMetrics,
   };
+}
+
+export function createDashboardData(
+  payload: PublicDashboardPayload,
+  dataSource: DashboardData["dataSource"] = "fallback",
+  manifest?: PublicDashboardManifest | null,
+): DashboardData {
+  const base = createDashboardSummaryData(
+    {
+      ...payload,
+      leaderboardPreviewRows: payload.leaderboardPreviewRows ?? payload.traders.slice(0, 50),
+    },
+    dataSource,
+    manifest,
+  );
+  return createDashboardDataFromParts(base, payload.traders);
 }
 
 export function findTrader(address: string) {
@@ -145,6 +198,7 @@ export const traders = fallbackData.traders;
 export const overviewSeries = fallbackData.overviewSeries;
 export const summary = fallbackData.summary;
 export const concentration = fallbackData.concentration;
+export const concentrationCurve = fallbackData.concentrationCurve;
 export const pnlDistribution = fallbackData.pnlDistribution;
 export const tapOutcomeDistribution = fallbackData.tapOutcomeDistribution;
 export const tapCountDistribution = fallbackData.tapCountDistribution;

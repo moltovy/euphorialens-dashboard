@@ -6,7 +6,8 @@ EuphoriaLens is an independent research dashboard. It is not affiliated with, en
 
 ## Data Mode
 
-- Fetches the approved public dashboard JSON from Cloudflare R2 when `EUPHORIA_PUBLIC_DASHBOARD_URL` is set.
+- Fetches the approved public dashboard JSON bundle from Cloudflare R2 when `EUPHORIA_PUBLIC_DASHBOARD_URL` is set.
+- Prefers split route-specific JSON files from `gold/public/v3/` and falls back to the legacy `public-dashboard.json` contract when needed.
 - Uses a 300-second Next.js revalidation window for the public JSON feed.
 - Falls back to bundled public-shaped records if the feed is not configured or unavailable.
 - Uses `NEXT_PUBLIC_EUPHORIA_ASSET_BASE_URL` for optional Cloudflare-hosted heavy media assets.
@@ -44,6 +45,14 @@ The production Vercel app should point `EUPHORIA_PUBLIC_DASHBOARD_URL` at:
 https://<r2-public-domain>/gold/public/public-dashboard.json
 ```
 
+Optional split-data base URL:
+
+```text
+EUPHORIA_PUBLIC_DATA_BASE_URL=https://<r2-public-domain>/gold/public/
+```
+
+If the split base URL is unset, the app derives it from `EUPHORIA_PUBLIC_DASHBOARD_URL`.
+
 Custom domain recommendations:
 
 - `euphorialens.xyz`
@@ -54,6 +63,7 @@ Vercel setup:
 
 - Import this public repository into the existing `euphorialens` Vercel project, or create a new Vercel project from this repository.
 - Keep the project root as `/`; this repository is already the dashboard app root.
+- Keep production branch as `main`.
 - Add the domain in Vercel project Settings -> Domains.
 - Configure the DNS record Vercel provides.
 - Keep the same `EUPHORIA_PUBLIC_DASHBOARD_URL` environment variable.
@@ -72,6 +82,15 @@ NEXT_PUBLIC_EUPHORIA_ASSET_BASE_URL=https://<cloudflare-public-asset-host>
 ```
 
 If the variable is unset, the app uses local lightweight `/brand/...` files as fallback.
+
+## Freshness Semantics
+
+The dashboard separates two timestamps:
+
+- `Dashboard feed refreshed`: when the public JSON bundle was generated and uploaded.
+- `On-chain data through`: the latest lifecycle event timestamp included in the metrics.
+
+This avoids treating a freshly rebuilt dashboard feed as proof that on-chain indexing is fully caught up.
 
 ## Public Safety Boundary
 

@@ -6,10 +6,9 @@ import { ChartPanel, TraderProfileChart } from "@/components/charts";
 import { CopyAddressButton } from "@/components/copy-address-button";
 import { CohortBadge, KpiCard, SectionHeader } from "@/components/kpi-card";
 import { PublicShell } from "@/components/public-shell";
-import { getDashboardData } from "@/lib/dashboard-data-server";
+import { getTopProfileAddresses, getTraderProfile } from "@/lib/dashboard-data-server";
 import { formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
-import type { TraderRecord } from "@/lib/types";
 
 type PageProps = {
   params: Promise<{ address: string }>;
@@ -25,38 +24,29 @@ const cohortLabels: Record<string, string> = {
 export const revalidate = 300;
 export const dynamicParams = true;
 
-function findTrader(rows: TraderRecord[], address: string) {
-  const normalized = address.toLowerCase();
-  return rows.find(
-    (trader) =>
-      trader.address.toLowerCase() === normalized || trader.shortAddress.toLowerCase() === normalized,
-  );
-}
-
 export async function generateStaticParams() {
-  const { traders } = await getDashboardData();
-  return traders.map((trader) => ({ address: trader.address }));
+  const addresses = await getTopProfileAddresses(50);
+  return addresses.map((address) => ({ address }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { address } = await params;
-  const { traders } = await getDashboardData();
-  const trader = findTrader(traders, address);
+  const profile = await getTraderProfile(address);
 
   return {
-    title: trader ? `${trader.shortAddress} | Euphoria Trader Profile` : "Trader not found",
+    title: profile ? `${profile.trader.shortAddress} | Euphoria Trader Profile` : "Trader not found",
   };
 }
 
 export default async function TraderProfilePage({ params }: PageProps) {
   const { address } = await params;
-  const { asOfUtc, metadata, traders } = await getDashboardData();
-  const trader = findTrader(traders, address);
+  const profile = await getTraderProfile(address);
 
-  if (!trader) notFound();
+  if (!profile) notFound();
+  const { asOfUtc, metadata, trader } = profile;
 
   return (
-    <PublicShell active="/traders" asOfUtc={asOfUtc}>
+    <PublicShell active="/traders" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="mx-auto max-w-7xl">
           <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

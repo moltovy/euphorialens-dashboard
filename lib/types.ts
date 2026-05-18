@@ -19,6 +19,14 @@ export type ActivityPoint = {
   whaleSharePercent: number;
 };
 
+export type ConcentrationCurvePoint = {
+  rank: number;
+  address?: string;
+  shortAddress: string;
+  volumeUsd?: number;
+  cumulativeSharePercent: number;
+};
+
 export type TraderActivityPoint = {
   date: string;
   volumeUsd: number;
@@ -78,6 +86,13 @@ export type PublicDashboardMetadata = {
   lastSeenAt?: string | null;
   minTimestamp?: string | null;
   maxTimestamp?: string | null;
+  analysisDataThrough?: string | null;
+  dashboardRefreshAgeSeconds?: number | null;
+  onchainDataLagSeconds?: number | null;
+  freshnessStatus?: "live" | "catching_up" | "stale" | "unknown" | string | null;
+  freshnessLabel?: string | null;
+  freshnessNotes?: string[];
+  sourceTimestampSemantics?: Record<string, string>;
   pnlAvailable: boolean;
   pnlMetricKind?: string | null;
   netTraderPnlAvailable?: boolean;
@@ -199,8 +214,99 @@ export type PublicDashboardPayload = {
   pnlDistribution?: PnlDistributionPayload | null;
   tapOutcomeDistribution?: DistributionBucket[];
   tapCountDistribution?: DistributionBucket[];
+  concentrationCurve?: ConcentrationCurvePoint[];
+  leaderboardPreviewRows?: TraderRecord[];
+  topProfileAddresses?: string[];
   traders: TraderRecord[];
   leaderboard?: TraderRecord[];
   overviewSeries: ActivityPoint[];
   settlementDistribution?: DistributionBucket[];
+};
+
+export type PublicDashboardSummaryPayload = Omit<PublicDashboardPayload, "traders" | "leaderboard"> & {
+  traders?: TraderRecord[];
+  leaderboard?: TraderRecord[];
+  leaderboardPreviewRows?: TraderRecord[];
+  topProfileAddresses?: string[];
+};
+
+export type PublicDashboardManifestFile = {
+  path: string;
+  objectKey: string;
+  kind: string;
+  bytes: number;
+  sha256?: string;
+  rowCount?: number | null;
+};
+
+export type PublicDashboardManifest = {
+  schemaVersion: number;
+  legacySchemaVersion?: number;
+  network: string;
+  chainId?: number;
+  generatedAt: string;
+  analysisDataThrough?: string | null;
+  maxTimestamp?: string | null;
+  freshnessStatus?: string | null;
+  freshnessLabel?: string | null;
+  dashboardRefreshAgeSeconds?: number | null;
+  onchainDataLagSeconds?: number | null;
+  dashboardObjectKey?: string;
+  manifestObjectKey?: string;
+  publicGoldFresh?: boolean;
+  rowCount?: number;
+  split?: {
+    schemaVersion: number;
+    basePath: string;
+    summary: string;
+    addressMap: string;
+    traderIndexShards: string[];
+    traderActivityShards: string[];
+    topProfileAddresses?: string[];
+    shardSize: number;
+    totalTraders: number;
+  } | null;
+  files?: PublicDashboardManifestFile[];
+  privateDataIncluded?: boolean;
+  walletHandleJoinIncluded?: boolean;
+};
+
+export type PublicTraderIndexShard = {
+  schemaVersion: number;
+  generatedAt: string;
+  network: string;
+  kind: "traders_index";
+  shardIndex: number;
+  shardCount: number;
+  rowCount: number;
+  rows: TraderRecord[];
+};
+
+export type PublicTraderActivityShard = {
+  schemaVersion: number;
+  generatedAt: string;
+  network: string;
+  kind: "trader_activity";
+  shardIndex: number;
+  shardCount: number;
+  rowCount: number;
+  rows: Array<{ address: string; activity: TraderActivityPoint[] }>;
+};
+
+export type PublicTraderAddressMap = {
+  schemaVersion: number;
+  generatedAt: string;
+  network: string;
+  kind: "trader_address_map";
+  shardSize: number;
+  totalTraders: number;
+  addresses: Record<
+    string,
+    {
+      indexShard: string;
+      activityShard: string;
+      rank?: number;
+      shortAddress?: string;
+    }
+  >;
 };

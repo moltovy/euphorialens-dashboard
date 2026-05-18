@@ -11,10 +11,10 @@ import { getMegaEthAddressUrl } from "@/lib/links";
 export const revalidate = 300;
 
 export default async function WhalesPage() {
-  const { asOfUtc, largestTransfers, overviewSeries, traders, whaleMetrics, whaleTraders } = await getDashboardData();
+  const { asOfUtc, largestTransfers, metadata, overviewSeries, traders, whaleMetrics, whaleTraders } = await getDashboardData();
 
   return (
-    <PublicShell active="/whales" asOfUtc={asOfUtc}>
+    <PublicShell active="/whales" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="mx-auto max-w-7xl">
           <SectionHeader

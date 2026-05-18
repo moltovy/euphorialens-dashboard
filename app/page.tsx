@@ -13,12 +13,13 @@ import { FreshnessBadge } from "@/components/freshness-badge";
 import { KpiCard, SectionHeader } from "@/components/kpi-card";
 import { PublicShell } from "@/components/public-shell";
 import { SeamlessVideo } from "@/components/seamless-video";
-import { getDashboardData } from "@/lib/dashboard-data-server";
+import { getDashboardSummary } from "@/lib/dashboard-data-server";
+import type { DashboardSummaryData } from "@/lib/dashboard-data";
 import { formatDateTime, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 
 export const revalidate = 300;
 
-function LeaderboardPreview({ traders }: { traders: Awaited<ReturnType<typeof getDashboardData>>["traders"] }) {
+function LeaderboardPreview({ traders }: { traders: DashboardSummaryData["leaderboardPreviewRows"] }) {
   return (
     <div className="overflow-hidden rounded-lg border border-white/10 bg-euphoria-panel/[0.86]">
       <table className="w-full min-w-[980px] border-collapse text-sm">
@@ -63,82 +64,6 @@ function LeaderboardPreview({ traders }: { traders: Awaited<ReturnType<typeof ge
   );
 }
 
-function median(values: number[]) {
-  if (!values.length) {
-    return null;
-  }
-  const sorted = [...values].sort((a, b) => a - b);
-  const midpoint = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0 ? (sorted[midpoint - 1] + sorted[midpoint]) / 2 : sorted[midpoint];
-}
-
-function buildPnlDistribution(traders: Awaited<ReturnType<typeof getDashboardData>>["traders"]) {
-  const rows = traders
-    .map((trader) => ({
-      address: trader.address,
-      value: trader.accountPnlUsd ?? trader.pnlUsd,
-      winRate: trader.winRatePercent,
-      taps: trader.activityEvents ?? trader.transferBets,
-      volumeUsd: trader.volumeUsd,
-    }))
-    .filter((row): row is typeof row & { value: number } => typeof row.value === "number" && Number.isFinite(row.value));
-
-  const ranges = [
-    { label: "< -$10K", min: -Infinity, max: -10_000, tone: "loss" as const },
-    { label: "-$10K to -$1K", min: -10_000, max: -1_000, tone: "loss" as const },
-    { label: "-$1K to -$100", min: -1_000, max: -100, tone: "loss" as const },
-    { label: "-$100 to $0", min: -100, max: 0, tone: "loss" as const },
-    { label: "$0 to $100", min: 0, max: 100, tone: "profit" as const },
-    { label: "$100 to $1K", min: 100, max: 1_000, tone: "profit" as const },
-    { label: "$1K to $10K", min: 1_000, max: 10_000, tone: "profit" as const },
-    { label: "> $10K", min: 10_000, max: Infinity, tone: "profit" as const },
-  ];
-  const values = rows.map((row) => row.value);
-  const total = Math.max(rows.length, 1);
-  const buckets = ranges.map((range) => {
-    const count = rows.filter((row) => row.value >= range.min && row.value < range.max).length;
-    return {
-      label: range.label,
-      count,
-      percent: (count / total) * 100,
-      tone: range.tone,
-    };
-  });
-  const profitRows = rows.filter((row) => row.value > 0);
-  const lossRows = rows.filter((row) => row.value < 0);
-  const finiteWinRates = rows
-    .map((row) => row.winRate)
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-  const finiteTaps = rows
-    .map((row) => row.taps)
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-  const totalTaps = rows
-    .map((row) => row.taps)
-    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
-  const totalTapCount = totalTaps.reduce((sum, value) => sum + value, 0);
-  const totalVolumeUsd = rows.reduce((sum, row) => sum + row.volumeUsd, 0);
-
-  return {
-    buckets,
-    stats: {
-      traderCount: rows.length,
-      averagePnlUsd: rows.length ? values.reduce((sum, value) => sum + value, 0) / rows.length : null,
-      medianPnlUsd: median(values),
-      avgWinRatePercent: finiteWinRates.length
-        ? finiteWinRates.reduce((sum, value) => sum + value, 0) / finiteWinRates.length
-        : null,
-      avgTapsPerTrader: finiteTaps.length
-        ? finiteTaps.reduce((sum, value) => sum + value, 0) / finiteTaps.length
-        : null,
-      averageBetUsd: totalTapCount > 0 ? totalVolumeUsd / totalTapCount : null,
-      bestTrader: rows.length ? rows.reduce((best, row) => (row.value > best.value ? row : best), rows[0]) : null,
-      worstTrader: rows.length ? rows.reduce((worst, row) => (row.value < worst.value ? row : worst), rows[0]) : null,
-      profitSharePercent: (profitRows.length / total) * 100,
-      lossSharePercent: (lossRows.length / total) * 100,
-    },
-  };
-}
-
 export default async function HomePage() {
   const {
     dataSource,
@@ -150,19 +75,20 @@ export default async function HomePage() {
     tapCountDistribution,
     tapOutcomeDistribution,
     tradeUrl,
-    traders,
+    leaderboardPreviewRows,
+    concentrationCurve,
     whaleMetrics,
-    whaleTraders,
     xUrl,
-  } = await getDashboardData();
-  const pnlDistribution = metadata.pnlAvailable ? payloadPnlDistribution ?? buildPnlDistribution(traders) : null;
+  } = await getDashboardSummary();
+  const pnlDistribution = metadata.pnlAvailable ? payloadPnlDistribution : null;
+  const whalePreviewRows = [...leaderboardPreviewRows].sort((a, b) => b.volumeUsd - a.volumeUsd).slice(0, 2);
   const tradingAccounts = summary.tradingAccounts ?? summary.platformTraderAddressCount ?? summary.indexedTraders ?? summary.totalTraders;
   const totalTaps = summary.indexedActivity ?? summary.activityEvents ?? summary.transferBets;
   const largestPlatformPayout = summary.largestPlatformPayoutUsd ?? summary.largestSettlementUsd;
   const renderedAt = new Date().toISOString();
 
   return (
-    <PublicShell active="/" asOfUtc={asOfUtc}>
+    <PublicShell active="/" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="mx-auto max-w-7xl flex flex-col-reverse md:flex-row md:items-center justify-between gap-8">
           <div className="relative z-10 max-w-4xl">
@@ -212,13 +138,12 @@ export default async function HomePage() {
           <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-euphoria-panel/[0.72] p-4 shadow-panel backdrop-blur md:flex-row md:items-center md:justify-between">
             <FreshnessBadge
               dataSource={dataSource}
-              generatedAt={asOfUtc}
-              publicGoldFresh={metadata.publicGoldFresh}
+              metadata={metadata}
               renderedAt={renderedAt}
             />
             <div className="grid gap-3 text-xs text-euphoria-muted md:text-right">
               <div>
-                <div className="font-bold uppercase tracking-[0.12em] text-white/70">Data refreshed</div>
+                <div className="font-bold uppercase tracking-[0.12em] text-white/70">Dashboard feed</div>
                 <div className="mt-1 text-white">{formatDateTime(asOfUtc)}</div>
               </div>
             </div>
@@ -285,13 +210,13 @@ export default async function HomePage() {
           />
           <div className="grid gap-4 lg:grid-cols-3">
             <ChartPanel title="Taps Outcome" eyebrow="Wins / losses">
-              <TapsOutcomeChart traders={traders} buckets={tapOutcomeDistribution} />
+              <TapsOutcomeChart traders={[]} buckets={tapOutcomeDistribution} />
             </ChartPanel>
             <ChartPanel title="Accounts by Tap Count" eyebrow="Account cohorts">
-              <TapsPerAccountChart traders={traders} buckets={tapCountDistribution} />
+              <TapsPerAccountChart traders={[]} buckets={tapCountDistribution} />
             </ChartPanel>
             <ChartPanel title="Concentration Curve" eyebrow="Volume share">
-              <ConcentrationCurveChart traders={traders} />
+              <ConcentrationCurveChart points={concentrationCurve} />
             </ChartPanel>
           </div>
         </section>
@@ -331,7 +256,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <LeaderboardPreview traders={traders} />
+            <LeaderboardPreview traders={leaderboardPreviewRows} />
           </div>
         </section>
 
@@ -347,7 +272,7 @@ export default async function HomePage() {
             ))}
           </div>
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
-            {whaleTraders.slice(0, 2).map((trader) => (
+            {whalePreviewRows.map((trader) => (
               <Link
                 key={trader.address}
                 href={`/traders/${trader.address}`}

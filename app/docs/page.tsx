@@ -1,4 +1,5 @@
 import { PublicShell } from "@/components/public-shell";
+import { getDashboardSummary } from "@/lib/dashboard-data-server";
 
 const metricDefinitions = [
   {
@@ -31,9 +32,10 @@ const metricDefinitions = [
   },
 ];
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const { asOfUtc, metadata } = await getDashboardSummary();
   return (
-    <PublicShell active="/docs">
+    <PublicShell active="/docs" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="mx-auto max-w-7xl">
           <div className="rounded-lg border border-white/10 bg-euphoria-panel/[0.86] p-8 shadow-panel backdrop-blur md:p-10">
@@ -67,9 +69,9 @@ export default function DocsPage() {
             <section className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-5">
               <h2 className="font-bold text-white">Refresh Cadence</h2>
               <p className="mt-2 text-sm leading-6 text-euphoria-muted">
-                Data is generated from the public pipeline. The dashboard dataset is intended to refresh about every
-                five minutes, and Vercel revalidates dashboard data on a 300-second cadence. The footer and top
-                freshness badge show the latest generated time.
+                Data is generated from the public pipeline. The dashboard feed is intended to refresh about every
+                five minutes, and Vercel revalidates dashboard data on a 300-second cadence. Freshness labels separate
+                when the feed was refreshed from the latest on-chain lifecycle event included in the metrics.
               </p>
             </section>
 

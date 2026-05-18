@@ -13,7 +13,7 @@ export default async function TradersPage() {
   const tradingAccounts = summary.tradingAccounts ?? summary.platformTraderAddressCount ?? summary.totalTraders;
 
   return (
-    <PublicShell active="/traders" asOfUtc={asOfUtc}>
+    <PublicShell active="/traders" asOfUtc={asOfUtc} metadata={metadata}>
       <main className="px-4 py-8 md:py-10">
         <section className="mx-auto max-w-7xl">
           <SectionHeader
