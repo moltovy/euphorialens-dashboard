@@ -1,5 +1,4 @@
 import {
-  createDashboardData,
   createDashboardDataFromParts,
   createDashboardSummaryData,
   fallbackDashboardData,
@@ -10,7 +9,6 @@ import {
 } from "@/lib/dashboard-data";
 import type {
   PublicDashboardManifest,
-  PublicDashboardPayload,
   PublicDashboardSummaryPayload,
   PublicTraderActivityShard,
   PublicTraderAddressMap,
@@ -47,19 +45,12 @@ function resolvePublicUrl(path: string) {
   }
 }
 
-type FetchJsonOptions = {
-  cacheLargeLegacyPayload?: boolean;
-};
-
-async function fetchJson<T>(url: string | undefined, options: FetchJsonOptions = {}): Promise<T | null> {
+async function fetchJson<T>(url: string | undefined): Promise<T | null> {
   if (!url) return null;
   try {
-    const cacheOptions = options.cacheLargeLegacyPayload
-      ? { cache: "no-store" as const }
-      : { next: { revalidate: 300 } };
     const response = await fetch(url, {
       headers: { accept: "application/json" },
-      ...cacheOptions,
+      next: { revalidate: 300 },
     });
     if (!response.ok) return null;
     return (await response.json()) as T;
@@ -87,10 +78,7 @@ function splitPath(manifest: PublicDashboardManifest, path: string) {
 }
 
 export async function getDashboardDataLegacy(): Promise<DashboardData> {
-  const payload = await fetchJson<PublicDashboardPayload>(LEGACY_DATA_URL, {
-    cacheLargeLegacyPayload: true,
-  });
-  return payload ? createDashboardData(payload, "remote") : fallbackDashboardData;
+  return fallbackDashboardData;
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummaryData> {
