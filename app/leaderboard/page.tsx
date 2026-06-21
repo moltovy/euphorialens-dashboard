@@ -4,7 +4,8 @@ import { PublicShell } from "@/components/public-shell";
 import { getDashboardData } from "@/lib/dashboard-data-server";
 import { formatInteger, formatOptionalPercent, formatOptionalUsd } from "@/lib/format";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function LeaderboardPage() {
   const { asOfUtc, metadata, summary, traders } = await getDashboardData();

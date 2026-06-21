@@ -8,7 +8,8 @@ import { getDashboardData } from "@/lib/dashboard-data-server";
 import { formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function WhalesPage() {
   const { asOfUtc, largestTransfers, metadata, overviewSeries, traders, whaleMetrics, whaleTraders } = await getDashboardData();

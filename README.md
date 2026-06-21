@@ -8,7 +8,8 @@ EuphoriaLens is an independent research dashboard. It is not affiliated with, en
 
 - Fetches the approved public dashboard JSON bundle from Cloudflare R2 when `EUPHORIA_PUBLIC_DASHBOARD_URL` is set.
 - Prefers split route-specific JSON files from `gold/public/v3/` and falls back to the legacy `public-dashboard.json` contract when needed.
-- Uses a 300-second Next.js revalidation window for the public JSON feed.
+- Reads the public JSON feed dynamically on the server so the dashboard does
+  not show stale page-cache metrics after the R2 feed advances.
 - Falls back to bundled public-shaped records if the feed is not configured or unavailable.
 - Uses `NEXT_PUBLIC_EUPHORIA_ASSET_BASE_URL` for optional Cloudflare-hosted heavy media assets.
 - No secrets or production credentials are required by the dashboard app.

@@ -49,8 +49,8 @@ async function fetchJson<T>(url: string | undefined): Promise<T | null> {
   if (!url) return null;
   try {
     const response = await fetch(url, {
+      cache: "no-store",
       headers: { accept: "application/json" },
-      next: { revalidate: 300 },
     });
     if (!response.ok) return null;
     return (await response.json()) as T;

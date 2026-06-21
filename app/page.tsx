@@ -17,7 +17,8 @@ import { getDashboardSummary } from "@/lib/dashboard-data-server";
 import type { DashboardSummaryData } from "@/lib/dashboard-data";
 import { formatDateTime, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function LeaderboardPreview({ traders }: { traders: DashboardSummaryData["leaderboardPreviewRows"] }) {
   return (
