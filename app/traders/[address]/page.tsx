@@ -6,7 +6,7 @@ import { ChartPanel, TraderProfileChart } from "@/components/charts";
 import { CopyAddressButton } from "@/components/copy-address-button";
 import { CohortBadge, KpiCard, SectionHeader } from "@/components/kpi-card";
 import { PublicShell } from "@/components/public-shell";
-import { getTopProfileAddresses, getTraderProfile } from "@/lib/dashboard-data-server";
+import { getTraderProfile } from "@/lib/dashboard-data-server";
 import { formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
 
@@ -21,13 +21,9 @@ const cohortLabels: Record<string, string> = {
   grinder: "Power User",
 };
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export const dynamicParams = true;
-
-export async function generateStaticParams() {
-  const addresses = await getTopProfileAddresses(50);
-  return addresses.map((address) => ({ address }));
-}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { address } = await params;

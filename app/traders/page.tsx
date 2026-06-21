@@ -5,7 +5,8 @@ import { TraderSearch } from "@/components/trader-search";
 import { getDashboardData } from "@/lib/dashboard-data-server";
 import { formatInteger, formatOptionalPercent, formatOptionalUsd } from "@/lib/format";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function TradersPage() {
   const { asOfUtc, metadata, summary, traders } = await getDashboardData();

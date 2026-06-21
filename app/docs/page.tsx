@@ -69,9 +69,9 @@ export default async function DocsPage() {
             <section className="mt-4 rounded-lg border border-white/10 bg-white/[0.035] p-5">
               <h2 className="font-bold text-white">Refresh Cadence</h2>
               <p className="mt-2 text-sm leading-6 text-euphoria-muted">
-                Data is generated from the public pipeline. The dashboard feed is intended to refresh about every
-                five minutes, and Vercel revalidates dashboard data on a 300-second cadence. Freshness labels separate
-                when the feed was refreshed from the latest on-chain lifecycle event included in the metrics.
+                Data is generated from the public pipeline. The dashboard feed is intended to stay near real time, and
+                the site reads the public JSON feed dynamically so page-cache metrics do not mask a newer R2 snapshot.
+                Freshness labels separate when the feed was refreshed from the latest on-chain lifecycle event included in the metrics.
               </p>
             </section>
 
