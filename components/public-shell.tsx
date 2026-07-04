@@ -119,11 +119,11 @@ export function MethodologyFooter({
             EuphoriaLens
           </div>
           <p className="mt-3 max-w-3xl text-sm leading-6 text-euphoria-subtle">
-            Independent analytics for Euphoria Mainnet activity, including official leaderboard display when available, public-safe on-chain volume, taps, trading accounts, Net PNL (Est.), and concentration.
+            On-chain analytics for Euphoria Mainnet activity, including public-safe volume, taps, trading accounts, Net PNL (Est.), and concentration.
           </p>
           <p className="mt-3 text-xs leading-5 text-euphoria-subtle/60">
             Dashboard feed refreshed: {formatDateTime(asOfUtc)}
-            {dataThrough ? ` | On-chain data through: ${formatDateTime(dataThrough)}` : ""}. EuphoriaLens is an independent research dashboard. Not affiliated with, endorsed by, or sponsored by Euphoria Finance.
+            {dataThrough ? ` · On-chain data through: ${formatDateTime(dataThrough)}` : ""}. EuphoriaLens is an independent research dashboard. Not affiliated with, endorsed by, or sponsored by Euphoria Finance.
           </p>
         </div>
         <div className="flex flex-wrap gap-2 lg:justify-end">

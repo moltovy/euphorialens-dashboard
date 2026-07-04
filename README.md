@@ -10,8 +10,6 @@ EuphoriaLens is an independent research dashboard. It is not affiliated with, en
 - Prefers split route-specific JSON files from `gold/public/v3/` and falls back to the legacy `public-dashboard.json` contract when needed.
 - Reads the public JSON feed dynamically on the server so the dashboard does
   not show stale page-cache metrics after the R2 feed advances.
-- Fetches the official Euphoria all-time leaderboard from the public app data source when it is accessible without private credentials.
-- Keeps official leaderboard rows separate from EuphoriaLens on-chain wallet/account analytics.
 - Falls back to bundled public-shaped records if the feed is not configured or unavailable.
 - Uses `NEXT_PUBLIC_EUPHORIA_ASSET_BASE_URL` for optional Cloudflare-hosted heavy media assets.
 - No secrets or production credentials are required by the dashboard app.
@@ -20,8 +18,7 @@ EuphoriaLens is an independent research dashboard. It is not affiliated with, en
 
 Current public metric classes:
 
-- official app metrics: official all-time leaderboard rows and official trading stats when exposed by the public app data source
-- verified activity metrics: on-chain observed volume, Total Taps, trading accounts, average bet size, and largest payout candidates
+- verified activity metrics: on-chain volume, Total Taps, trading accounts, average bet size, and largest payout
 - estimated account metrics: Net PNL (Est.) from decoded platform payouts minus observed stakes
 - public concentration metrics: top-account volume share, Gini, HHI, and concentration curves
 
@@ -56,19 +53,6 @@ EUPHORIA_PUBLIC_DATA_BASE_URL=https://<r2-public-domain>/gold/public/
 ```
 
 If the split base URL is unset, the app derives it from `EUPHORIA_PUBLIC_DASHBOARD_URL`.
-
-Optional official-source configuration:
-
-```text
-EUPHORIA_OFFICIAL_API_BASE_URL=https://api.mainnet.euphoria.finance
-EUPHORIA_OFFICIAL_LEADERBOARD_URL=
-EUPHORIA_OFFICIAL_REVALIDATE_SECONDS=300
-EUPHORIA_OFFICIAL_FETCH_TIMEOUT_MS=5000
-```
-
-Do not configure private cookies, browser sessions, wallet keys, or API secrets in this dashboard repository. If the official
-app route is unavailable without a session, the dashboard shows an official-source warning and does not substitute
-estimated Net PNL as the official leaderboard.
 
 Custom domain recommendations:
 
@@ -106,7 +90,6 @@ The dashboard separates two timestamps:
 
 - `Dashboard feed refreshed`: when the public JSON bundle was generated and uploaded.
 - `On-chain data through`: the latest lifecycle event timestamp included in the metrics.
-- `Official leaderboard generated`: when the dashboard last fetched the official app data source or public official mirror.
 
 This avoids treating a freshly rebuilt dashboard feed as proof that on-chain indexing is fully caught up.
 

@@ -3,16 +3,8 @@ import { getDashboardSummary } from "@/lib/dashboard-data-server";
 
 const metricDefinitions = [
   {
-    term: "Official All-Time Leaderboard",
-    definition: "Rank, trader display record, and value from Euphoria Finance's official public app leaderboard source when accessible.",
-  },
-  {
-    term: "Official Trading Stats",
-    definition: "Official taps and volume when exposed by the Euphoria public app data source.",
-  },
-  {
-    term: "On-chain Observed Volume",
-    definition: "Lifecycle-derived stake volume from public on-chain records published through the EuphoriaLens R2 feed.",
+    term: "On-chain Volume",
+    definition: "Total observed public lifecycle activity volume.",
   },
   {
     term: "Indexed Taps",
@@ -24,7 +16,7 @@ const metricDefinitions = [
   },
   {
     term: "Net PNL (Est.)",
-    definition: "Estimated from observed account lifecycle cashflows. It is not the official Euphoria leaderboard and is not wallet-level realized PNL.",
+    definition: "Estimated from observed account lifecycle cashflows. It is not wallet-level realized PNL.",
   },
   {
     term: "Platform Win Rate",
@@ -32,7 +24,7 @@ const metricDefinitions = [
   },
   {
     term: "Largest Payout",
-    definition: "Largest observed Engine-to-account platform payout candidate from public lifecycle decoding.",
+    definition: "Largest observed Engine-to-account platform payout.",
   },
   {
     term: "Trader Concentration",
@@ -69,9 +61,8 @@ export default async function DocsPage() {
               <h2 className="font-bold text-white">Data Sources</h2>
               <p className="mt-2 text-sm leading-6 text-euphoria-muted">
                 The dashboard uses public Euphoria Mainnet on-chain lifecycle records, public transaction and log data,
-                derived account-level metrics, and the official Euphoria public app leaderboard source when it is
-                accessible without private credentials. It does not include private wallet-handle joins, private
-                market-data research, debug records, operational logs, or secrets.
+                and derived account-level metrics. It does not include linked social handles, private market-data
+                research, debug records, or operational logs.
               </p>
             </section>
 
@@ -101,8 +92,7 @@ export default async function DocsPage() {
                 <h2 className="font-bold text-white">Methodology</h2>
                 <p className="mt-2 text-sm leading-6 text-euphoria-muted">
                   The pipeline collects public on-chain events, decodes lifecycle records into public metrics, and
-                  publishes a compact dashboard dataset from Cloudflare R2. Official leaderboard rows are kept as a
-                  separate source and are not inferred from wallet PNL estimates. Missing values are shown as unavailable
+                  publishes a compact dashboard dataset from Cloudflare R2. Missing values are shown as unavailable
                   rather than as zero.
                 </p>
               </section>

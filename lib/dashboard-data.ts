@@ -66,20 +66,7 @@ export function normalizeTraderRows(rows: TraderRecord[] = []) {
 }
 
 export function sortTraderRows(rows: TraderRecord[]) {
-  return [...rows].sort((a, b) => {
-    const pnlA = a.accountPnlUsd ?? a.pnlUsd;
-    const pnlB = b.accountPnlUsd ?? b.pnlUsd;
-    if (typeof pnlA === "number" && Number.isFinite(pnlA) && typeof pnlB === "number" && Number.isFinite(pnlB)) {
-      return pnlB - pnlA;
-    }
-    if (typeof pnlA === "number" && Number.isFinite(pnlA)) {
-      return -1;
-    }
-    if (typeof pnlB === "number" && Number.isFinite(pnlB)) {
-      return 1;
-    }
-    return b.volumeUsd - a.volumeUsd;
-  });
+  return [...rows].sort((a, b) => b.volumeUsd - a.volumeUsd);
 }
 
 function buildWhaleMetrics(

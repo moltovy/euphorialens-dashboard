@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -30,21 +30,9 @@ function sortLabel(state: false | "asc" | "desc") {
 export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTableProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const hasNetPnl = useMemo(
-    () =>
-      rows.some((row) => {
-        const value = row.accountPnlUsd ?? row.pnlUsd;
-        return typeof value === "number" && Number.isFinite(value);
-      }),
-    [rows],
-  );
   const [sorting, setSorting] = useState<SortingState>([
-    { id: hasNetPnl ? "accountPnlUsd" : "volumeUsd", desc: true },
+    { id: "volumeUsd", desc: true },
   ]);
-
-  useEffect(() => {
-    setSorting([{ id: hasNetPnl ? "accountPnlUsd" : "volumeUsd", desc: true }]);
-  }, [hasNetPnl]);
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -54,11 +42,12 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
   const columns = useMemo<ColumnDef<TraderRecord>[]>(
     () => [
       {
-        accessorKey: "rank",
-        header: "Rank",
+        accessorFn: (row) => row.volumeRank ?? row.rank,
+        id: "volumeRank",
+        header: "Volume Rank",
         cell: ({ row }) => (
           <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md border border-white/10 bg-white/[0.04] px-2 font-mono text-xs text-white">
-            {row.original.rank}
+            {row.original.volumeRank ?? row.original.rank}
           </span>
         ),
       },
@@ -80,16 +69,9 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
         ),
       },
       {
-        accessorFn: (row) => row.leaderboardPayoutUsd ?? row.estimatedLeaderboardPnlUsd,
-        id: "leaderboardScoreUsd",
-        header: "Leaderboard Score",
-        cell: ({ row }) => (
-          <span className="font-mono font-bold text-euphoria-cyan">
-            {formatOptionalUsd(row.original.leaderboardPayoutUsd ?? row.original.estimatedLeaderboardPnlUsd, {
-              compact: true,
-            })}
-          </span>
-        ),
+        accessorKey: "volumeUsd",
+        header: "All-Time Volume",
+        cell: ({ row }) => <span className="font-mono font-bold text-white">{formatUsd(row.original.volumeUsd, { compact: true })}</span>,
       },
       {
         accessorKey: "accountPnlUsd",
@@ -116,9 +98,16 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
         },
       },
       {
-        accessorKey: "volumeUsd",
-        header: "Volume",
-        cell: ({ row }) => <span className="font-mono text-white">{formatUsd(row.original.volumeUsd, { compact: true })}</span>,
+        accessorFn: (row) => row.leaderboardPayoutUsd ?? row.estimatedLeaderboardPnlUsd,
+        id: "leaderboardScoreUsd",
+        header: "Payout Candidate",
+        cell: ({ row }) => (
+          <span className="font-mono font-bold text-euphoria-cyan">
+            {formatOptionalUsd(row.original.leaderboardPayoutUsd ?? row.original.estimatedLeaderboardPnlUsd, {
+              compact: true,
+            })}
+          </span>
+        ),
       },
       {
         accessorKey: "activityEvents",
@@ -251,24 +240,18 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-xs font-bold uppercase tracking-[0.14em] text-euphoria-muted">
-                  Rank {row.original.rank}
+                  Volume Rank {row.original.volumeRank ?? row.original.rank}
                 </div>
                 <div className="mt-1 font-mono text-sm font-bold text-euphoria-pink">{row.original.shortAddress}</div>
               </div>
               <div className="text-right text-lg font-bold text-white">
-                {formatOptionalUsd(row.original.leaderboardPayoutUsd ?? row.original.estimatedLeaderboardPnlUsd, {
-                  compact: true,
-                })}
+                {formatUsd(row.original.volumeUsd, { compact: true })}
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">Leaderboard Score</div>
-                <div className="mt-1 font-bold text-euphoria-cyan">
-                  {formatOptionalUsd(row.original.leaderboardPayoutUsd ?? row.original.estimatedLeaderboardPnlUsd, {
-                    compact: true,
-                  })}
-                </div>
+                <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">All-Time Volume</div>
+                <div className="mt-1 font-bold text-white">{formatUsd(row.original.volumeUsd, { compact: true })}</div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">Net PNL (Est.)</div>
@@ -290,8 +273,12 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
                 <div className="mt-1 font-bold text-white">{formatInteger(row.original.activityEvents ?? row.original.transferBets)}</div>
               </div>
               <div>
-                <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">Volume</div>
-                <div className="mt-1 font-bold text-white">{formatUsd(row.original.volumeUsd, { compact: true })}</div>
+                <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">Payout Candidate</div>
+                <div className="mt-1 font-bold text-euphoria-cyan">
+                  {formatOptionalUsd(row.original.leaderboardPayoutUsd ?? row.original.estimatedLeaderboardPnlUsd, {
+                    compact: true,
+                  })}
+                </div>
               </div>
               <div>
                 <div className="text-xs uppercase tracking-[0.12em] text-euphoria-muted">Win Rate</div>
