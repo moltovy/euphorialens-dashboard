@@ -7,6 +7,7 @@ import { ExternalLink, Search } from "lucide-react";
 import { filterTraders } from "@/lib/dashboard-data";
 import { formatDate, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
+import { traderDisplayName, traderSecondaryLabel } from "@/lib/trader-display";
 import type { CohortFilter, TraderRecord } from "@/lib/types";
 
 export function TraderSearch({ rows }: { rows: TraderRecord[] }) {
@@ -31,7 +32,7 @@ export function TraderSearch({ rows }: { rows: TraderRecord[] }) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by 0x address"
+              placeholder="Search by trader or 0x address"
               className="w-full rounded-md border border-white/10 bg-white/[0.04] py-2 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-euphoria-muted focus:border-euphoria-pink/70"
             />
           </label>
@@ -49,9 +50,10 @@ export function TraderSearch({ rows }: { rows: TraderRecord[] }) {
                 <div className="text-xs font-bold uppercase tracking-[0.14em] text-euphoria-muted">
                   Rank {trader.rank}
                 </div>
-                <div className="mt-1 flex items-center gap-2 font-mono text-sm font-bold text-euphoria-pink">
+                <div className="mt-1 flex items-center gap-2 text-sm font-bold text-euphoria-pink">
                   <Link href={`/traders/${trader.address}`} className="transition hover:text-euphoria-magenta">
-                  {trader.shortAddress}
+                    <span className="block">{traderDisplayName(trader)}</span>
+                    <span className="block font-mono text-[11px] text-euphoria-muted">{traderSecondaryLabel(trader)}</span>
                   </Link>
                   <a
                     href={getMegaEthAddressUrl(trader.address)}

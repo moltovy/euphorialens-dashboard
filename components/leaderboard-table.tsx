@@ -14,6 +14,7 @@ import {
 import { ArrowUpDown, Search } from "lucide-react";
 
 import { cn, formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
+import { traderDisplayName, traderSecondaryLabel } from "@/lib/trader-display";
 import type { TraderRecord } from "@/lib/types";
 
 type LeaderboardTableProps = {
@@ -36,7 +37,17 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
 
   const filteredRows = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    return rows.filter((row) => row.address.toLowerCase().includes(normalizedQuery) || row.shortAddress.toLowerCase().includes(normalizedQuery));
+    return rows.filter((row) =>
+      [
+        row.address,
+        row.shortAddress,
+        row.displayName,
+        row.username,
+        row.publicUserId,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
+    );
   }, [rows, query]);
 
   const columns = useMemo<ColumnDef<TraderRecord>[]>(
@@ -54,17 +65,18 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
       {
         accessorKey: "shortAddress",
         id: "trader",
-        header: "Trader Address",
+        header: "Trader",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-[170px] flex-col gap-1">
             <Link
               href={`/traders/${row.original.address}`}
-              className="font-mono text-xs font-bold text-euphoria-pink transition hover:text-euphoria-magenta"
+              className="text-sm font-bold text-euphoria-pink transition hover:text-euphoria-magenta"
               title={row.original.address}
               onClick={(event) => event.stopPropagation()}
             >
-              {row.original.shortAddress}
+              {traderDisplayName(row.original)}
             </Link>
+            <span className="font-mono text-[11px] text-euphoria-muted">{traderSecondaryLabel(row.original)}</span>
           </div>
         ),
       },
@@ -242,7 +254,8 @@ export function LeaderboardTable({ rows, title = "Leaderboard" }: LeaderboardTab
                 <div className="text-xs font-bold uppercase tracking-[0.14em] text-euphoria-muted">
                   Volume Rank {row.original.volumeRank ?? row.original.rank}
                 </div>
-                <div className="mt-1 font-mono text-sm font-bold text-euphoria-pink">{row.original.shortAddress}</div>
+                <div className="mt-1 text-sm font-bold text-euphoria-pink">{traderDisplayName(row.original)}</div>
+                <div className="mt-1 font-mono text-xs text-euphoria-muted">{traderSecondaryLabel(row.original)}</div>
               </div>
               <div className="text-right text-lg font-bold text-white">
                 {formatUsd(row.original.volumeUsd, { compact: true })}

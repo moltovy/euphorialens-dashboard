@@ -7,6 +7,7 @@ import { PublicShell } from "@/components/public-shell";
 import { getDashboardData } from "@/lib/dashboard-data-server";
 import { formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
+import { traderDisplayName, traderSecondaryLabel } from "@/lib/trader-display";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -69,8 +70,11 @@ export default async function WhalesPage() {
                     {whaleTraders.map((trader) => (
                       <tr key={trader.address} className="border-b border-white/[0.06]">
                         <td className="px-3 py-3">
-                          <Link href={`/traders/${trader.address}`} className="inline-flex items-center gap-2 font-mono text-xs font-bold text-euphoria-pink transition hover:text-euphoria-magenta">
-                            {trader.shortAddress}
+                          <Link href={`/traders/${trader.address}`} className="inline-flex items-center gap-2 text-xs font-bold text-euphoria-pink transition hover:text-euphoria-magenta">
+                            <span>
+                              <span className="block text-sm">{traderDisplayName(trader)}</span>
+                              <span className="block font-mono text-[11px] text-euphoria-muted">{traderSecondaryLabel(trader)}</span>
+                            </span>
                             <ArrowUpRight size={13} />
                           </Link>
                           <a
@@ -109,7 +113,8 @@ export default async function WhalesPage() {
                     className="flex items-center justify-between gap-4 rounded-md border border-white/10 bg-white/[0.035] p-3 transition hover:border-euphoria-pink/[0.45]"
                   >
                     <div>
-                      <div className="font-mono text-xs font-bold text-euphoria-pink transition group-hover:text-euphoria-magenta">{trader.shortAddress}</div>
+                      <div className="text-sm font-bold text-euphoria-pink transition group-hover:text-euphoria-magenta">{traderDisplayName(trader)}</div>
+                      <div className="mt-0.5 font-mono text-[11px] text-euphoria-muted">{traderSecondaryLabel(trader)}</div>
                       <div className="mt-1 text-xs text-euphoria-muted">Last active {formatDate(trader.lastActive)}</div>
                     </div>
                     <div className="text-right font-bold text-euphoria-green">
