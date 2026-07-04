@@ -70,14 +70,14 @@ export function FreshnessBadge({ dataSource, metadata, renderedAt }: FreshnessBa
       <div className="flex flex-wrap items-center gap-2">
         <span className={warning ? "h-2 w-2 rounded-full bg-euphoria-red" : "h-2 w-2 rounded-full bg-euphoria-green"} />
         <span>Dashboard feed: {feed.label}</span>
-        <span className="text-white/40">·</span>
+        <span className="text-white/40">|</span>
         <span>refreshed {elapsedLabel(generatedAgeSeconds)}</span>
       </div>
       <div className="mt-1 flex flex-wrap items-center gap-2 text-white/80">
         <span>On-chain index: {onchain.label}</span>
-        <span className="text-white/35">·</span>
-        <span>data through {dataThrough ? formatDateTime(dataThrough) : "—"}</span>
-        <span className="text-white/35">·</span>
+        <span className="text-white/35">|</span>
+        <span>data through {dataThrough ? formatDateTime(dataThrough) : "-"}</span>
+        <span className="text-white/35">|</span>
         <span>{elapsedLabel(onchainLagSeconds)} behind</span>
       </div>
     </div>
