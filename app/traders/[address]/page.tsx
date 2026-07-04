@@ -9,6 +9,7 @@ import { PublicShell } from "@/components/public-shell";
 import { getTraderProfile } from "@/lib/dashboard-data-server";
 import { formatDate, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
 import { getMegaEthAddressUrl } from "@/lib/links";
+import { traderDisplayName } from "@/lib/trader-display";
 
 type PageProps = {
   params: Promise<{ address: string }>;
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const profile = await getTraderProfile(address);
 
   return {
-    title: profile ? `${profile.trader.shortAddress} | Euphoria Trader Profile` : "Trader not found",
+    title: profile ? `${traderDisplayName(profile.trader)} | Euphoria Trader Profile` : "Trader not found",
   };
 }
 
@@ -48,7 +49,7 @@ export default async function TraderProfilePage({ params }: PageProps) {
           <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="text-xs font-bold uppercase tracking-[0.18em] text-euphoria-pink">Trader profile</div>
-              <h1 className="mt-2 font-mono text-3xl font-black text-white md:text-5xl">{trader.shortAddress}</h1>
+              <h1 className="mt-2 text-3xl font-black text-white md:text-5xl">{traderDisplayName(trader)}</h1>
               <p className="mt-3 max-w-3xl break-all text-sm leading-6 text-euphoria-muted">{trader.address}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {trader.cohorts.map((cohort) => (

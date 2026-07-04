@@ -16,6 +16,7 @@ import { SeamlessVideo } from "@/components/seamless-video";
 import { getDashboardSummary } from "@/lib/dashboard-data-server";
 import type { DashboardSummaryData } from "@/lib/dashboard-data";
 import { formatDateTime, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
+import { traderDisplayName, traderSecondaryLabel } from "@/lib/trader-display";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -42,7 +43,8 @@ function LeaderboardPreview({ traders }: { traders: DashboardSummaryData["leader
               <td className="px-4 py-3 font-mono text-white">{trader.volumeRank ?? trader.rank}</td>
               <td className="px-4 py-3">
                 <Link href={`/traders/${trader.address}`} className="font-mono text-xs font-bold text-euphoria-pink hover:text-euphoria-magenta transition">
-                  {trader.shortAddress}
+                  <span className="block font-sans text-sm">{traderDisplayName(trader)}</span>
+                  <span className="block text-[11px] text-euphoria-muted">{traderSecondaryLabel(trader)}</span>
                 </Link>
               </td>
               <td className="px-4 py-3 text-white font-mono font-bold">{formatUsd(trader.volumeUsd, { compact: true })}</td>

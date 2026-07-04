@@ -168,10 +168,16 @@ export function findTrader(address: string) {
 export function filterTraders(rows: TraderRecord[], query: string, cohort: CohortFilter) {
   const needle = query.trim().toLowerCase();
   return rows.filter((row) => {
+    const searchFields = [
+      row.address,
+      row.shortAddress,
+      row.displayName,
+      row.username,
+      row.publicUserId,
+    ].filter(Boolean);
     const matchesQuery =
       !needle ||
-      row.address.toLowerCase().includes(needle) ||
-      row.shortAddress.toLowerCase().includes(needle);
+      searchFields.some((value) => String(value).toLowerCase().includes(needle));
     const matchesCohort = cohort === "all" || row.cohorts.includes(cohort);
     return matchesQuery && matchesCohort;
   });
