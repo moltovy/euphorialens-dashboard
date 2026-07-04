@@ -69,6 +69,43 @@ export type TraderRecord = {
   activity: TraderActivityPoint[];
 };
 
+export type OfficialLeaderboardMetric = "payouts" | "pnl";
+
+export type OfficialLeaderboardWindow = "all" | "1d" | "7d" | "30d";
+
+export type OfficialLeaderboardRow = {
+  rank: number;
+  displayName: string;
+  username: string;
+  avatarObjectKey?: string | null;
+  avatarUrl?: string | null;
+  valueUsd: number;
+  valueDisplay: string;
+  metric: OfficialLeaderboardMetric;
+  timeWindow: OfficialLeaderboardWindow;
+  source: "official_euphoria_app";
+};
+
+export type OfficialTradingStats = {
+  tradeCount: number | null;
+  volumeUsd: number | null;
+  generatedAt: string;
+  source: "official_euphoria_app";
+};
+
+export type OfficialLeaderboardData = {
+  status: "ok" | "unavailable";
+  source: "official_euphoria_app";
+  sourceUrl: string;
+  metric: OfficialLeaderboardMetric;
+  timeWindow: OfficialLeaderboardWindow;
+  generatedAt: string;
+  rows: OfficialLeaderboardRow[];
+  tradingStats?: OfficialTradingStats | null;
+  error?: string;
+  staleReason?: string | null;
+};
+
 export type WhaleMetric = {
   label: string;
   value: string;

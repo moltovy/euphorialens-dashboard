@@ -14,49 +14,46 @@ import { KpiCard, SectionHeader } from "@/components/kpi-card";
 import { PublicShell } from "@/components/public-shell";
 import { SeamlessVideo } from "@/components/seamless-video";
 import { getDashboardSummary } from "@/lib/dashboard-data-server";
-import type { DashboardSummaryData } from "@/lib/dashboard-data";
+import { getOfficialLeaderboard } from "@/lib/official-euphoria";
 import { formatDateTime, formatInteger, formatOptionalPercent, formatOptionalUsd, formatUsd } from "@/lib/format";
+import type { OfficialLeaderboardData } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function LeaderboardPreview({ traders }: { traders: DashboardSummaryData["leaderboardPreviewRows"] }) {
+function OfficialLeaderboardPreview({ leaderboard }: { leaderboard: OfficialLeaderboardData }) {
+  if (leaderboard.status !== "ok") {
+    return (
+      <div className="rounded-lg border border-euphoria-red/35 bg-euphoria-red/10 p-5 text-sm leading-6 text-euphoria-subtle">
+        Official leaderboard data is unavailable. EuphoriaLens is keeping wallet estimates separate instead of
+        substituting them into the official ranking.
+      </div>
+    );
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-white/10 bg-euphoria-panel/[0.86]">
-      <table className="w-full min-w-[980px] border-collapse text-sm">
+      <table className="w-full min-w-[720px] border-collapse text-sm">
         <thead className="bg-[#120d1d]/95 text-left text-xs uppercase tracking-[0.12em] text-euphoria-muted">
           <tr>
             <th className="px-4 py-3">Rank</th>
             <th className="px-4 py-3">Trader</th>
-            <th className="px-4 py-3">Leaderboard Score</th>
-            <th className="px-4 py-3">Net PNL (Est.)</th>
-            <th className="px-4 py-3">Volume</th>
-            <th className="px-4 py-3">Taps</th>
-            <th className="px-4 py-3">Win Rate</th>
-            <th className="px-4 py-3 text-right">Largest Payout</th>
+            <th className="px-4 py-3 text-right">Official All-Time Ranking</th>
+            <th className="px-4 py-3">Source</th>
           </tr>
         </thead>
         <tbody>
-          {traders.slice(0, 10).map((trader) => (
-            <tr key={trader.address} className="border-t border-white/[0.06]">
-              <td className="px-4 py-3 font-mono text-white">{trader.rank}</td>
+          {leaderboard.rows.slice(0, 10).map((row) => (
+            <tr key={`${row.rank}-${row.username}`} className="border-t border-white/[0.06]">
+              <td className="px-4 py-3 font-mono text-white">{row.rank}</td>
               <td className="px-4 py-3">
-                <Link href={`/traders/${trader.address}`} className="font-mono text-xs font-bold text-euphoria-pink hover:text-euphoria-magenta transition">
-                  {trader.shortAddress}
-                </Link>
+                <div className="font-bold text-white">{row.displayName}</div>
+                <div className="text-sm text-euphoria-muted">@{row.username}</div>
               </td>
-              <td className="px-4 py-3 text-euphoria-cyan font-mono font-bold">
-                {formatOptionalUsd(trader.leaderboardPayoutUsd ?? trader.estimatedLeaderboardPnlUsd, { compact: true })}
-              </td>
-              <td className={`px-4 py-3 font-mono font-bold ${Number(trader.accountPnlUsd ?? trader.pnlUsd) < 0 ? "text-euphoria-red" : "text-euphoria-green"}`}>
-                {formatOptionalUsd(trader.accountPnlUsd ?? trader.pnlUsd, { signed: true, compact: true })}
-              </td>
-              <td className="px-4 py-3 text-white font-mono">{formatUsd(trader.volumeUsd, { compact: true })}</td>
-              <td className="px-4 py-3 text-white font-mono">{formatInteger(trader.activityEvents ?? trader.transferBets)}</td>
-              <td className="px-4 py-3 text-white font-mono">{formatOptionalPercent(trader.winRatePercent, 1)}</td>
               <td className="px-4 py-3 text-right text-euphoria-cyan font-mono font-bold">
-                {formatOptionalUsd(trader.largestPlatformPayoutUsd ?? trader.largestSettlementUsd, { compact: true })}
+                {row.valueDisplay}
               </td>
+              <td className="px-4 py-3 text-xs font-bold uppercase tracking-[0.12em] text-euphoria-muted">Official app</td>
             </tr>
           ))}
         </tbody>
@@ -66,26 +63,31 @@ function LeaderboardPreview({ traders }: { traders: DashboardSummaryData["leader
 }
 
 export default async function HomePage() {
-  const {
-    dataSource,
-    metadata,
-    overviewSeries,
-    asOfUtc,
-    pnlDistribution: payloadPnlDistribution,
-    summary,
-    tapCountDistribution,
-    tapOutcomeDistribution,
-    tradeUrl,
-    leaderboardPreviewRows,
-    concentrationCurve,
-    whaleMetrics,
-    xUrl,
-  } = await getDashboardSummary();
+  const [
+    {
+      dataSource,
+      metadata,
+      overviewSeries,
+      asOfUtc,
+      pnlDistribution: payloadPnlDistribution,
+      summary,
+      tapCountDistribution,
+      tapOutcomeDistribution,
+      tradeUrl,
+      leaderboardPreviewRows,
+      concentrationCurve,
+      whaleMetrics,
+      xUrl,
+    },
+    officialLeaderboard,
+  ] = await Promise.all([getDashboardSummary(), getOfficialLeaderboard({ timeWindow: "all", metric: "payouts" })]);
   const pnlDistribution = metadata.pnlAvailable ? payloadPnlDistribution : null;
   const whalePreviewRows = [...leaderboardPreviewRows].sort((a, b) => b.volumeUsd - a.volumeUsd).slice(0, 2);
   const tradingAccounts = summary.tradingAccounts ?? summary.platformTraderAddressCount ?? summary.indexedTraders ?? summary.totalTraders;
   const totalTaps = summary.indexedActivity ?? summary.activityEvents ?? summary.transferBets;
   const largestPlatformPayout = summary.largestPlatformPayoutUsd ?? summary.largestSettlementUsd;
+  const officialTop = officialLeaderboard.rows[0];
+  const officialStats = officialLeaderboard.tradingStats;
   const renderedAt = new Date().toISOString();
 
   return (
@@ -153,9 +155,21 @@ export default async function HomePage() {
 
         <section className="mx-auto mt-4 grid max-w-7xl gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <KpiCard
-            label="On-chain Volume"
+            label="Official #1"
+            value={officialTop ? officialTop.valueDisplay : "Unavailable"}
+            detail={officialTop ? `${officialTop.displayName} on Euphoria Finance's official all-time ranking.` : "Official public app data did not load."}
+            tone={officialTop ? "pink" : "red"}
+          />
+          <KpiCard
+            label="Official Volume"
+            value={formatOptionalUsd(officialStats?.volumeUsd, { compact: true })}
+            detail="Official trading volume when exposed by the public app source."
+            tone="cyan"
+          />
+          <KpiCard
+            label="On-chain Observed Volume"
             value={formatUsd(summary.totalVolumeUsd, { compact: true })}
-            detail="Total public activity volume."
+            detail="Lifecycle-derived observed stake volume from public R2."
             icon={<img src="/brand/stickers/1.webp" alt="Euphoria goat sticker" className="h-11 w-11 object-contain drop-shadow-[0_0_8px_rgba(252,141,244,0.28)]" />}
             tone="pink"
           />
@@ -244,9 +258,9 @@ export default async function HomePage() {
         <section className="mx-auto mt-10 max-w-7xl">
           <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <SectionHeader
-            eyebrow="Leaderboard"
-            title="Net PNL leaderboard"
-            description="Ranked by Net PNL (Est.) across all indexed trading accounts. Leaderboard Score is shown separately."
+              eyebrow="Leaderboard"
+              title="Official all-time leaderboard"
+              description="Official Euphoria ranking is shown separately from EuphoriaLens wallet/account estimates."
             />
             <Link
               href="/leaderboard"
@@ -257,7 +271,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="overflow-x-auto">
-            <LeaderboardPreview traders={leaderboardPreviewRows} />
+            <OfficialLeaderboardPreview leaderboard={officialLeaderboard} />
           </div>
         </section>
 
